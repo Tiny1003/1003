@@ -1,0 +1,31 @@
+check_security() {
+    echo "Auditing remote file permissions..."
+    
+    # 强制重新设置一遍变量，防止顶部定义失效
+    local TARGET_IP="192.168.138.4"
+    local TARGET_DIR="/mnt/remote_verify"
+    
+    # 1. 确保目录一定存在
+    sudo mkdir -p $TARGET_DIR
+    
+    # 2. 极其稳妥的挂载写法（注意每个空格）
+    echo "Attempting to mount..."
+    sudo mount -t cifs //$TARGET_IP/MyShare $TARGET_DIR -o username=student,password=hty051003.,vers=3.0,noperm
+    
+    # 3. 检查是否真的挂载成功了
+    if mountpoint -q $TARGET_DIR; then
+        REMOTE_PERM=$(stat -c "%a" $TARGET_DIR)
+        echo "Status: Detected Permission -> $REMOTE_PERM"
+        
+        if [ "$REMOTE_PERM" == "777" ]; then
+            echo "--------------------------------------"
+            echo "Warning: [ALERT] Unsafe 777 permission!"
+            echo "--------------------------------------"
+        else
+            echo "Status: [OK] Security Normal ($REMOTE_PERM)."
+        fi
+        sudo umount $TARGET_DIR
+    else
+        echo "Error: [FAIL] Mount failed! Still can't see the server."
+    fi
+}
