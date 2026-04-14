@@ -1,0 +1,30 @@
+check_security() {
+    echo "--------------------------------------"
+    echo "Auditing remote file permissions..."
+    
+    # 强制在函数内部定义路径，防止外部变量丢失
+    local TARGET_IP="192.168.138.4"
+    local TARGET_MNT="/mnt/remote_verify"
+    
+    # 1. 确保目录一定存在
+    sudo mkdir -p "$TARGET_MNT"
+    
+    # 2. 挂载命令：注意双引号保护变量，注意 MyShare 后的空格
+    echo "Checking connection to //$TARGET_IP/MyShare ..."
+    sudo mount -t cifs "//$TARGET_IP/MyShare" "$TARGET_MNT" -o username=student,password=hty051003.,vers=3.0,noperm
+    
+    # 3. 检查是否挂载成功
+    if mountpoint -q "$TARGET_MNT"; then
+        PERM=$(stat -c "%a" "$TARGET_MNT")
+        echo "Status: Detected Permission -> $PERM"
+        
+        if [ "$PERM" == "777" ]; then
+            echo "Warning: [ALERT] Unsafe 777 permission!"
+        else
+            echo "Status: [OK] Security Normal ($PERM)."
+        fi
+        sudo umount -l "$TARGET_MNT"
+    else
+        echo "Error: [FAIL] Mount point not found. Please check manual command."
+    fi
+}
