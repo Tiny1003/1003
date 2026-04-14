@@ -1,0 +1,1 @@
+sudo mount -t cifs //192.168.138.4/MyShare /mnt/remote_verify -o username=student,password=hty051003.,vers=3.0,noperm
